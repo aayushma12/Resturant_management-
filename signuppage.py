@@ -13,7 +13,7 @@ db = mysql.connector.connect(
     host="localhost",
     user="root",
     password="rosesareredstraw",
-    database="hms_db"
+    database="resturant_ms"
 )
 cursor = db.cursor()
 
@@ -50,7 +50,7 @@ def signup():
 
 signup_page=Tk()
 signup_page.title("Signup")
-
+signup_page.geometry("1250x700")
     
 # For background images 
 bgimage=ImageTk.PhotoImage(file="hotel2.jpg")

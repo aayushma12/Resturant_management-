@@ -4,7 +4,7 @@ from PIL import Image,ImageTk
 
 
 order_page= Tk()
-order_page.geometry("1200x650")
+order_page.geometry("1250x700")
 order_page.title("Hotel Management System")
 font1= font.Font(family="Georgia")
 font2= font.Font(family="Georgia", size=8)
@@ -31,7 +31,7 @@ def addorder():
     
 def vieworder():
     order_page.destroy()
-    import vieworder
+    import View_Order
     
 
 

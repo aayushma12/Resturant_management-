@@ -13,7 +13,7 @@ db = mysql.connector.connect(
     host="localhost",
     user="root",
     password="rosesareredstraw",
-    database="hms_db"
+    database="resturant_ms"
 )
 cursor = db.cursor()
 
@@ -43,6 +43,7 @@ def login():
 
 login_page=Tk()
 login_page.title("Login")
+login_page.geometry("1250x700")
 
     
 # For background images 

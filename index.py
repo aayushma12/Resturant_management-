@@ -16,6 +16,7 @@ def signupfunction():
 
 index_page=Tk()
 index_page.title('WELCOME TO HOTEL MANAGEMENT SYSTEM')
+index_page.geometry("1250x700")
 
 # For background images 
 bgimage=ImageTk.PhotoImage(file="hotel.jpg")

@@ -4,7 +4,7 @@ from PIL import Image,ImageTk
 
 
 landing_page= Tk()
-landing_page.geometry("1200x650")
+landing_page.geometry("1250x700")
 landing_page.title("Hotel Management System")
 # landing_page.configure(bg= "#ADD8E6")
 font1= font.Font(family="Georgia")
@@ -27,14 +27,14 @@ welcome_label.pack(padx=20, pady=20)
 
 def orderpage():
     landing_page.destroy()
-    import order_page
+    import Order_Page
 def accountpage():
     landing_page.destroy()
-    import accountpage
+    import Account
     
 def kitchenpage():
     landing_page.destroy()
-    import kitchenpage   
+    import kitchen_page   
 def staffpage():
     landing_page.destroy()
     import staffpage

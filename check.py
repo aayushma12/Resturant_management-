@@ -5,6 +5,7 @@ from PIL import Image,ImageTk
 
 check_Order=Tk()
 check_Order.title("Checked Order")
+check_Order.geometry("1250x700")
 
 
     

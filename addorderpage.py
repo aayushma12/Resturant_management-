@@ -1,17 +1,17 @@
-from tkinter import *
+from tkinter import * 
 import mysql.connector
 from tkinter import messagebox
 from PIL import Image,ImageTk
 
 
+
 # Connect to MySQL database
 db = mysql.connector.connect(
-    host="localhost",
-    user="root",
+    host="localhost", 
+    user="root", 
     password="rosesareredstraw",
-    database="hms_db"
-)    
-
+    database="resturant_ms"
+)
 # Create a cursor object to interact with the database
 mycursor = db.cursor()
 
@@ -50,34 +50,54 @@ def addBox():
     
     all_entries.append( (ent1, ent2, ent3) )
     
-
 def save_order():
     # Retrieve data from Tkinter entries
     name = name_box.get()
     contact = contact_box.get()
-   
 
-    # Insert customer data into the database
-    mycursor.execute("INSERT INTO customers (name, contact) VALUES (%s, %s)", (name, contact))
-    db.commit()
+    try:
+        # Check if customer already exists
+        mycursor.execute("SELECT id FROM customers WHERE contact=%s", (contact,))
+        existing_customer = mycursor.fetchone()
 
-    # Retrieve the customer ID
-    customer_id = mycursor.lastrowid
+        if existing_customer:
+            # Update customer name
+            customer_id = existing_customer[0]
+            mycursor.execute("UPDATE customers SET name=%s WHERE id=%s", (name, customer_id))
+            db.commit()
 
-    # Insert order details into the database
-    for entry_set in all_entries:
-        item_name, quantity, price = [entry.get() for entry in entry_set]
-        mycursor.execute("INSERT INTO orders (customer_id, item_name, quantity, price) VALUES (%s, %s, %s, %s)",
-                         (customer_id, item_name, quantity, price))
-        db.commit()
+    
+        else:
+            # Insert new customer data
+            mycursor.execute("INSERT INTO customers (name, contact) VALUES (%s, %s)", (name, contact))
+            db.commit()
 
-    messagebox.showinfo("Success", "Order saved successfully!")
+            # Retrieve the customer ID
+            customer_id = mycursor.lastrowid
+
+        # Insert order details into the database
+        for entry_set in all_entries:
+            item_name, quantity, price = [entry.get() for entry in entry_set]
+            mycursor.execute("INSERT INTO orders (customer_id, item_name, quantity, price) VALUES (%s, %s, %s, %s)",
+                             (customer_id, item_name, quantity, price))
+            db.commit()
+
+        messagebox.showinfo("Success", "Order saved successfully!")
+
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        messagebox.showerror("Error", "Failed to save order. Check the console for details.")
+
+    finally:
+        all_entries.clear()  # Clear the list after saving to avoid duplicates
+
+
 all_entries = []
 New_Order=Tk()
 New_Order.title("New_Order")
+New_Order.geometry("1250x700")
 
-
-# For background images 
+# For background image
 bgimage=ImageTk.PhotoImage(file="tower.jpg")
 bglabel=Label(New_Order, image=bgimage)
 bglabel.place(relx=0, rely=0, relwidth=1, relheight=1)
@@ -109,5 +129,4 @@ add_item_btn.place(x=400,y=350)
 #For Save button
 save_btn=Button(New_Order,font=('Aapex',16),relief='ridge',border=4,width=10,text=("Save"),bg='light green', command=save_order)
 save_btn.place(x=750,y=350)
-
 New_Order.mainloop()

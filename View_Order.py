@@ -1,44 +1,146 @@
 import tkinter as tk
-from tkinter import PhotoImage
+from tkinter import ttk
+from PIL import Image,ImageTk
+from tkinter import messagebox
+import mysql.connector
 
-def on_search_click():
-    search_text = search_entry.get()
-    print(f"Searching for: {search_text}")
 
-def on_button1_click():
-    print("Button 1 clicked!")
+def search_by_phone():
+    # Clear previous data in the treeview
+    for record in tree.get_children():
+        tree.delete(record)
 
-def on_button2_click():
-    print("Button 2 clicked!")
+    try:
+        connection = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="rosesareredstraw",
+            database="resturant_ms"
+        )
+        cursor = connection.cursor()
 
+        # Get the phone number from the entry widget
+        phone_number = phone_entry.get()
+
+        # Execute SQL query to fetch combined data from customers and orders tables
+        query = f"""
+            SELECT customers.name, customers.contact
+            FROM customers
+            WHERE customers.contact = '{phone_number}'
+        """
+        cursor.execute(query)
+        customer_details = cursor.fetchone()
+
+        if customer_details:
+            # Insert customer details into the treeview
+            tree.insert('', 'end', values=customer_details)
+            # tree.insert('', 'end', values=('', '', '', customer_details))
+
+
+            # Execute another query to fetch order details
+            query = f"""
+                SELECT orders.item_name, orders.quantity, orders.price
+                FROM orders
+                WHERE orders.customer_id = (
+                    SELECT id FROM customers WHERE contact = '{phone_number}'
+                )
+            """
+            cursor.execute(query)
+            order_details = cursor.fetchall()
+
+            # Insert order details into the treeview
+            for order_detail in order_details:
+                tree.insert('', 'end', values=['', ''] + list(order_detail))
+                # tree.insert('', 'end', values=('', '', '', order_details))
+        else:
+            print("Customer not found.")
+
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+    
+    finally:
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+
+def delete_selected_item():
+    # Get the selected item from the Treeview
+    selected_item = tree.selection()
+
+    if selected_item:
+        # Extract customer details from the selected item
+        customer_name, customer_contact, *_ = tree.item(selected_item, 'values')
+
+        try:
+            # Connect to MySQL database
+            connection = mysql.connector.connect(
+                host="localhost",
+                user="root",
+                password="rosesareredstraw",
+                database="resturant_ms"
+            )
+            cursor = connection.cursor()
+
+            # Delete the corresponding records from the 'orders' table
+            cursor.execute("""
+                DELETE FROM orders
+                WHERE customer_id = (
+                    SELECT id FROM customers WHERE name = %s AND contact = %s
+                )
+            """, (customer_name, customer_contact))
+
+            # Delete the selected item from the 'customers' table
+            cursor.execute("""
+                DELETE FROM customers
+                WHERE name = %s AND contact = %s
+            """, (customer_name, customer_contact))
+
+            # Commit the changes to the database
+            connection.commit()
+
+            # Delete the selected item from the Treeview
+            tree.delete(selected_item)
+
+            messagebox.showinfo("Success", "Record deleted successfully!")
+
+        except mysql.connector.Error as err:
+            print(f"Error: {err}")
+            messagebox.showerror("Error", "Failed to delete record. Check the console for details.")
+
+        finally:
+            if connection.is_connected():
+                cursor.close()
+                connection.close()
+
+# Tkinter setup
 root = tk.Tk()
-root.title("Frame Example")
+root.title("Search by Phone Number")
+root.geometry("1250x700")
 
-# Create the main frame
-main_frame = tk.Frame(root)
-main_frame.pack(padx=20, pady=20)
+# For background images 
+bgimage=ImageTk.PhotoImage(file="winter.jpg")
+bglabel=tk.Label(root, image=bgimage)
+bglabel.place(relx=0, rely=0, relwidth=1, relheight=1)
 
-# Create search box
-search_label = tk.Label(main_frame, text="Search:")
-search_label.grid(row=0, column=0)
-search_entry = tk.Entry(main_frame)
-search_entry.grid(row=0, column=1)
-search_button = tk.Button(main_frame, text="Search", command=on_search_click)
-search_button.grid(row=0, column=2)
+# Entry widget for entering the phone number
+phone_label = tk.Label(root, text="Enter Phone Number:")
+phone_label.pack()
+phone_entry = tk.Entry(root)
+phone_entry.pack(pady=5)
 
-# Create small frame inside main frame
-small_frame = tk.Frame(main_frame, bd=1, relief=tk.GROOVE)
-small_frame.grid(row=1, column=0, columnspan=3, pady=10, sticky="ew")
+# Treeview for displaying data
+columns = ('Customer Name', 'Contact', 'Item Name', 'Quantity', 'Price')
+tree = ttk.Treeview(root, columns=columns, show='headings')
+for col in columns:
+    tree.heading(col, text=col)
+tree.pack(pady=10)
 
-# Create buttons inside the small frame
-button1 = tk.Button(small_frame, text="Edit", command=on_button1_click)
-button1.pack(side=tk.LEFT, padx=5, pady=5)
-button2 = tk.Button(small_frame, text="Update", command=on_button2_click)
-button2.pack(side=tk.LEFT, padx=5, pady=5)
+# Button to search and display data
+search_button = tk.Button(root, text="Search by Phone Number", command=search_by_phone)
+search_button.pack(pady=10)
 
-# Load and display a background image in the small frame
-bg_image = PhotoImage("tower.jpg")
-bg_label = tk.Label(small_frame, image=bg_image)
-bg_label.pack(fill=tk.BOTH, expand=True)
-
+delete_button = tk.Button(root, text="delete", command=delete_selected_item)
+delete_button.pack(pady=10)
+# Run the Tkinter main loop
 root.mainloop()
